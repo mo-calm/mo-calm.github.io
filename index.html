@@ -27,7 +27,6 @@
     </div>
 
     <script>
-        // 替换为你自己的API密钥
         const baiduApiKey = '9kvID90RWDu8jptBpIqli8onGBLBRdf7';
         const amapApiKey = '8f0e9579912740ff977485b53e633bdf';
         const tencentApiKey = 'OI7BZ-IZKRH-VU3DC-WY27O-CAJV2-CWBTI';
@@ -36,15 +35,47 @@
         function getCompanyCoordinates() {
             var companyName = document.getElementById("companyName").value;
             fetch(`https://api.map.baidu.com/geocoding/v3/?address=${encodeURIComponent(companyName)}&output=json&ak=${baiduApiKey}`, {
-                mode: 'no-cors' // 使用 no-cors 模式
+                mode: 'no-cors'
             })
             .then(response => {
-                // no-cors 模式下，response 将是空的，不能访问数据
+                // no-cors 模式下无法获取响应数据
                 document.getElementById("companyGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取响应数据。";
+                // 由于无法读取响应，直接切换到高德地图查询
+                getCompanyCoordinatesFromAmap(companyName);
             })
             .catch(err => {
                 console.error(err);
-                document.getElementById("companyGpsResult").innerText = "请求失败";
+                getCompanyCoordinatesFromAmap(companyName);
+            });
+        }
+
+        // 使用高德地图API根据公司名称查询GPS坐标
+        function getCompanyCoordinatesFromAmap(companyName) {
+            fetch(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(companyName)}&key=${amapApiKey}`, {
+                mode: 'no-cors'
+            })
+            .then(response => {
+                document.getElementById("companyGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取高德地图响应数据。";
+                // 切换到腾讯地图查询
+                getCompanyCoordinatesFromTencent(companyName);
+            })
+            .catch(err => {
+                console.error(err);
+                getCompanyCoordinatesFromTencent(companyName);
+            });
+        }
+
+        // 使用腾讯地图API根据公司名称查询GPS坐标
+        function getCompanyCoordinatesFromTencent(companyName) {
+            fetch(`https://apis.map.qq.com/ws/geocoder/v1/?address=${encodeURIComponent(companyName)}&key=${tencentApiKey}`, {
+                mode: 'no-cors'
+            })
+            .then(response => {
+                document.getElementById("companyGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取腾讯地图响应数据。";
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById("companyGpsResult").innerText = "未找到该公司的GPS坐标";
             });
         }
 
@@ -52,15 +83,44 @@
         function getAddressInfo() {
             var address = document.getElementById("companyAddress").value;
             fetch(`https://api.map.baidu.com/geocoding/v3/?address=${encodeURIComponent(address)}&output=json&ak=${baiduApiKey}`, {
-                mode: 'no-cors' // 使用 no-cors 模式
+                mode: 'no-cors'
             })
             .then(response => {
-                // no-cors 模式下，response 将是空的，不能访问数据
                 document.getElementById("addressGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取响应数据。";
+                getAddressInfoFromAmap(address);
             })
             .catch(err => {
                 console.error(err);
-                document.getElementById("addressGpsResult").innerText = "请求失败";
+                getAddressInfoFromAmap(address);
+            });
+        }
+
+        // 使用高德地图API根据公司地址查询GPS坐标
+        function getAddressInfoFromAmap(address) {
+            fetch(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(address)}&key=${amapApiKey}`, {
+                mode: 'no-cors'
+            })
+            .then(response => {
+                document.getElementById("addressGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取高德地图响应数据。";
+                getAddressInfoFromTencent(address);
+            })
+            .catch(err => {
+                console.error(err);
+                getAddressInfoFromTencent(address);
+            });
+        }
+
+        // 使用腾讯地图API根据公司地址查询GPS坐标
+        function getAddressInfoFromTencent(address) {
+            fetch(`https://apis.map.qq.com/ws/geocoder/v1/?address=${encodeURIComponent(address)}&key=${tencentApiKey}`, {
+                mode: 'no-cors'
+            })
+            .then(response => {
+                document.getElementById("addressGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取腾讯地图响应数据。";
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById("addressGpsResult").innerText = "未找到该地址的GPS坐标";
             });
         }
     </script>
