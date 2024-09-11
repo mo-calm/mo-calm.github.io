@@ -84,6 +84,11 @@
             text-align: left; /* 改为居左对齐 */
         }
 
+        /* 调整第一个邮政编码段落后的行距为2倍 */
+        .postal-spacing {
+            margin-bottom: 2em;
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -108,15 +113,15 @@
             <input type="text" id="companyNameAmap" placeholder="输入地址/公司名称" onkeydown="if (event.key === 'Enter') getCompanyCoordinatesAmap();">
             <button onclick="getCompanyCoordinatesAmap()">高德查询</button>
         </div>
-        <p>GPS坐标: <span id="companyGpsResultAmap"></span></p>
-        <p>邮政编码: <span id="companyPostalCodeResultAmap"></span></p>
+        <p>GCJ-02坐标: <span id="companyGpsResultAmap"></span></p>
+        <p class="postal-spacing">邮政编码: <span id="companyPostalCodeResultAmap"></span></p>
 
         <!-- 百度地图查询 -->
         <div class="input-group">
             <input type="text" id="companyNameBaidu" placeholder="输入地址/公司名称" onkeydown="if (event.key === 'Enter') getCompanyCoordinatesBaidu();">
             <button onclick="getCompanyCoordinatesBaidu()">百度查询</button>
         </div>
-        <p>GPS坐标: <span id="companyGpsResultBaidu"></span></p>
+        <p>BD09坐标: <span id="companyGpsResultBaidu"></span></p>
         <p>邮政编码: <span id="companyPostalCodeResultBaidu"></span></p>
     </div>
 
