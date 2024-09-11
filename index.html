@@ -28,7 +28,6 @@
 
     <script>
         const amapApiKey = 'a74d0f4851c6e2003d5aeeb9e9472f74';
-        const baiduApiKey = 'MkR43IMX6wpEC6IbuAdxavWZo5RSb3Or';
 
         // 动态加载脚本函数，模拟 JSONP 请求
         function loadScript(url) {
@@ -39,13 +38,16 @@
 
         // 使用高德地图API根据公司名称查询GPS坐标和邮政编码的回调函数
         function handleAmapResponse(data) {
-            if (data.geocodes && data.geocodes.length > 0) {
-                const [lon, lat] = data.geocodes[0].location.split(',');
-                const postalCode = data.geocodes[0].adcode;
+            if (data.status === '1' && data.geocodes && data.geocodes.length > 0) {
+                const geocode = data.geocodes[0];
+                const [lon, lat] = geocode.location.split(',');
+                const postalCode = geocode.adcode;
+
                 document.getElementById("companyGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
                 document.getElementById("companyPostalCodeResult").innerText = postalCode || "未找到邮政编码";
             } else {
                 document.getElementById("companyGpsResult").innerText = "未找到该公司的GPS坐标";
+                document.getElementById("companyPostalCodeResult").innerText = "未找到邮政编码";
             }
         }
 
@@ -56,34 +58,7 @@
             loadScript(url);
         }
 
-        // 使用百度地图API作为备用，如果高德地图API查询失败
-        function handleBaiduResponse(data) {
-            if (data.status === 0) {
-                const lat = data.result.location.lat;
-                const lon = data.result.location.lng;
-                document.getElementById("companyGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
-                getPostalCodeFromCoordinates(lat, lon, "companyPostalCodeResult");
-            } else {
-                document.getElementById("companyGpsResult").innerText = "未找到该公司的GPS坐标";
-            }
-        }
-
-        // 使用百度地图API根据GPS坐标查询邮政编码的回调函数
-        function handlePostalCodeResponse(data, resultElementId) {
-            if (data.status === 0 && data.result.addressComponent && data.result.addressComponent.adcode) {
-                document.getElementById(resultElementId).innerText = data.result.addressComponent.adcode;
-            } else {
-                document.getElementById(resultElementId).innerText = "未找到邮政编码";
-            }
-        }
-
-        // 使用GPS坐标获取邮政编码（备用百度地图API）
-        function getPostalCodeFromCoordinates(lat, lon, resultElementId) {
-            const url = `https://api.map.baidu.com/reverse_geocoding/v3/?ak=${baiduApiKey}&output=json&location=${lat},${lon}&callback=handlePostalCodeResponse.bind(null, ${resultElementId})`;
-            loadScript(url);
-        }
-
-        // 根据公司地址获取 GPS 坐标并查询邮政编码
+        // 使用高德地图API根据地址查询GPS坐标和邮政编码
         function getAddressInfo() {
             const address = encodeURIComponent(document.getElementById("companyAddress").value);
             const url = `https://restapi.amap.com/v3/geocode/geo?address=${address}&key=${amapApiKey}&callback=handleAmapResponse`;
