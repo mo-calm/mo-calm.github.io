@@ -27,100 +27,162 @@
     </div>
 
     <script>
-        const baiduApiKey = '9kvID90RWDu8jptBpIqli8onGBLBRdf7';
+        // 替换为你自己的API密钥
+        const baiduApiKey = 'MkR43IMX6wpEC6IbuAdxavWZo5RSb3Or';
         const amapApiKey = '8f0e9579912740ff977485b53e633bdf';
         const tencentApiKey = 'OI7BZ-IZKRH-VU3DC-WY27O-CAJV2-CWBTI';
 
         // 使用百度地图API根据公司名称查询GPS坐标
         function getCompanyCoordinates() {
             var companyName = document.getElementById("companyName").value;
-            fetch(`https://api.map.baidu.com/geocoding/v3/?address=${encodeURIComponent(companyName)}&output=json&ak=${baiduApiKey}`, {
-                mode: 'no-cors'
-            })
-            .then(response => {
-                // no-cors 模式下无法获取响应数据
-                document.getElementById("companyGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取响应数据。";
-                // 由于无法读取响应，直接切换到高德地图查询
-                getCompanyCoordinatesFromAmap(companyName);
-            })
-            .catch(err => {
-                console.error(err);
-                getCompanyCoordinatesFromAmap(companyName);
+            fetch(`https://api.map.baidu.com/geocoding/v3/?address=${encodeURIComponent(companyName)}&output=json&ak=${baiduApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 0) {
+                    var lat = data.result.location.lat;
+                    var lon = data.result.location.lng;
+                    document.getElementById("companyGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
+                    // 通过GPS坐标查询邮政编码
+                    getPostalCodeFromCoordinates(lat, lon, "companyPostalCodeResult");
+                } else {
+                    // 如果百度地图没有返回结果，尝试高德地图
+                    getCompanyCoordinatesFromAmap(companyName);
+                }
             });
         }
 
         // 使用高德地图API根据公司名称查询GPS坐标
         function getCompanyCoordinatesFromAmap(companyName) {
-            fetch(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(companyName)}&key=${amapApiKey}`, {
-                mode: 'no-cors'
-            })
-            .then(response => {
-                document.getElementById("companyGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取高德地图响应数据。";
-                // 切换到腾讯地图查询
-                getCompanyCoordinatesFromTencent(companyName);
-            })
-            .catch(err => {
-                console.error(err);
-                getCompanyCoordinatesFromTencent(companyName);
+            fetch(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(companyName)}&key=${amapApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.geocodes && data.geocodes.length > 0) {
+                    var lat = data.geocodes[0].location.split(',')[1];
+                    var lon = data.geocodes[0].location.split(',')[0];
+                    document.getElementById("companyGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
+                    // 通过GPS坐标查询邮政编码
+                    getPostalCodeFromCoordinates(lat, lon, "companyPostalCodeResult");
+                } else {
+                    // 如果高德地图没有返回结果，尝试腾讯地图
+                    getCompanyCoordinatesFromTencent(companyName);
+                }
             });
         }
 
         // 使用腾讯地图API根据公司名称查询GPS坐标
         function getCompanyCoordinatesFromTencent(companyName) {
-            fetch(`https://apis.map.qq.com/ws/geocoder/v1/?address=${encodeURIComponent(companyName)}&key=${tencentApiKey}`, {
-                mode: 'no-cors'
+            fetch(`https://apis.map.qq.com/ws/geocoder/v1/?address=${encodeURIComponent(companyName)}&key=${tencentApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 0) {
+                    var lat = data.result.location.lat;
+                    var lon = data.result.location.lng;
+                    document.getElementById("companyGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
+                    // 通过GPS坐标查询邮政编码
+                    getPostalCodeFromCoordinates(lat, lon, "companyPostalCodeResult");
+                } else {
+                    document.getElementById("companyGpsResult").innerText = "未找到该公司的GPS坐标";
+                }
+            });
+        }
+
+        // 使用百度地图API根据GPS坐标查询邮政编码
+        function getPostalCodeFromCoordinates(lat, lon, resultElementId) {
+            fetch(`https://api.map.baidu.com/reverse_geocoding/v3/?ak=${baiduApiKey}&output=json&location=${lat},${lon}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 0 && data.result.addressComponent && data.result.addressComponent.adcode) {
+                    document.getElementById(resultElementId).innerText = data.result.addressComponent.adcode;
+                } else {
+                    // 如果百度地图没有返回结果，尝试高德地图
+                    getPostalCodeFromAmap(lat, lon, resultElementId);
+                }
             })
-            .then(response => {
-                document.getElementById("companyGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取腾讯地图响应数据。";
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById("companyGpsResult").innerText = "未找到该公司的GPS坐标";
+            .catch(() => {
+                // 如果百度地图出错，直接调用高德地图
+                getPostalCodeFromAmap(lat, lon, resultElementId);
+            });
+        }
+
+        // 使用高德地图API根据GPS坐标查询邮政编码
+        function getPostalCodeFromAmap(lat, lon, resultElementId) {
+            fetch(`https://restapi.amap.com/v3/geocode/regeo?location=${lon},${lat}&key=${amapApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.regeocode && data.regeocode.addressComponent && data.regeocode.addressComponent.adcode) {
+                    document.getElementById(resultElementId).innerText = data.regeocode.addressComponent.adcode;
+                } else {
+                    // 如果高德地图没有返回结果，尝试腾讯地图
+                    getPostalCodeFromTencent(lat, lon, resultElementId);
+                }
+            });
+        }
+
+        // 使用腾讯地图API根据GPS坐标查询邮政编码
+        function getPostalCodeFromTencent(lat, lon, resultElementId) {
+            fetch(`https://apis.map.qq.com/ws/geocoder/v1/?location=${lat},${lon}&key=${tencentApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 0 && data.result.address_component && data.result.address_component.adcode) {
+                    document.getElementById(resultElementId).innerText = data.result.address_component.adcode;
+                } else {
+                    document.getElementById(resultElementId).innerText = "未找到邮政编码";
+                }
             });
         }
 
         // 使用百度地图API根据公司地址查询GPS坐标和邮政编码
         function getAddressInfo() {
             var address = document.getElementById("companyAddress").value;
-            fetch(`https://api.map.baidu.com/geocoding/v3/?address=${encodeURIComponent(address)}&output=json&ak=${baiduApiKey}`, {
-                mode: 'no-cors'
-            })
-            .then(response => {
-                document.getElementById("addressGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取响应数据。";
-                getAddressInfoFromAmap(address);
-            })
-            .catch(err => {
-                console.error(err);
-                getAddressInfoFromAmap(address);
+            fetch(`https://api.map.baidu.com/geocoding/v3/?address=${encodeURIComponent(address)}&output=json&ak=${baiduApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 0) {
+                    var lat = data.result.location.lat;
+                    var lon = data.result.location.lng;
+                    document.getElementById("addressGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
+                    // 使用GPS坐标查询邮政编码
+                    getPostalCodeFromCoordinates(lat, lon, "addressPostalCodeResult");
+                } else {
+                    // 如果百度地图没有返回结果，尝试高德地图
+                    getAddressInfoFromAmap(address);
+                }
             });
         }
 
         // 使用高德地图API根据公司地址查询GPS坐标
         function getAddressInfoFromAmap(address) {
-            fetch(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(address)}&key=${amapApiKey}`, {
-                mode: 'no-cors'
-            })
-            .then(response => {
-                document.getElementById("addressGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取高德地图响应数据。";
-                getAddressInfoFromTencent(address);
-            })
-            .catch(err => {
-                console.error(err);
-                getAddressInfoFromTencent(address);
+            fetch(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(address)}&key=${amapApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.geocodes && data.geocodes.length > 0) {
+                    var lat = data.geocodes[0].location.split(',')[1];
+                    var lon = data.geocodes[0].location.split(',')[0];
+                    document.getElementById("addressGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
+                    // 使用GPS坐标查询邮政编码
+                    getPostalCodeFromCoordinates(lat, lon, "addressPostalCodeResult");
+                } else {
+                    // 如果高德地图没有返回结果，尝试腾讯地图
+                    getAddressInfoFromTencent(address);
+                }
             });
         }
 
         // 使用腾讯地图API根据公司地址查询GPS坐标
         function getAddressInfoFromTencent(address) {
-            fetch(`https://apis.map.qq.com/ws/geocoder/v1/?address=${encodeURIComponent(address)}&key=${tencentApiKey}`, {
-                mode: 'no-cors'
-            })
-            .then(response => {
-                document.getElementById("addressGpsResult").innerText = "请求已发送，但由于CORS限制，无法获取腾讯地图响应数据。";
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById("addressGpsResult").innerText = "未找到该地址的GPS坐标";
+            fetch(`https://apis.map.qq.com/ws/geocoder/v1/?address=${encodeURIComponent(address)}&key=${tencentApiKey}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 0) {
+                    var lat = data.result.location.lat;
+                    var lon = data.result.location.lng;
+                    document.getElementById("addressGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
+                    // 使用GPS坐标查询邮政编码
+                    getPostalCodeFromCoordinates(lat, lon, "addressPostalCodeResult");
+                } else {
+                    document.getElementById("addressGpsResult").innerText = "未找到该地址的GPS坐标";
+                    document.getElementById("addressPostalCodeResult").innerText = "未找到该地址的邮政编码";
+                }
             });
         }
     </script>
