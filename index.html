@@ -1,40 +1,69 @@
-<script>
-    const amapApiKey = 'a74d0f4851c6e2003d5aeeb9e9472f74';
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司名称与地址查询</title>
+</head>
+<body>
+    <h1>公司名称与地址查询</h1>
+    
+    <!-- 根据公司名称获取GPS坐标，并自动查询邮政编码 -->
+    <div>
+        <h2>根据公司名称查询GPS坐标和邮政编码</h2>
+        <input type="text" id="companyName" placeholder="输入公司名称">
+        <button onclick="getCompanyCoordinates()">查询GPS坐标和邮政编码</button>
+        <p>GPS坐标: <span id="companyGpsResult"></span></p>
+        <p>邮政编码: <span id="companyPostalCodeResult"></span></p>
+    </div>
+    
+    <!-- 根据公司地址获取GPS坐标，并查询邮政编码 -->
+    <div>
+        <h2>根据公司地址查询GPS坐标和邮政编码</h2>
+        <input type="text" id="companyAddress" placeholder="输入公司地址">
+        <button onclick="getAddressInfo()">查询GPS坐标和邮政编码</button>
+        <p>GPS坐标: <span id="addressGpsResult"></span></p>
+        <p>邮政编码: <span id="addressPostalCodeResult"></span></p>
+    </div>
 
-    // 动态加载脚本函数，模拟 JSONP 请求
-    function loadScript(url) {
-        const script = document.createElement('script');
-        script.src = url;
-        document.body.appendChild(script);
-    }
+    <script>
+        const amapApiKey = '8f0e9579912740ff977485b53e633bdf';
 
-    // 使用高德地图API根据公司名称查询GPS坐标和邮政编码的回调函数
-    function handleAmapResponse(data) {
-        console.log('API Response:', data); // 打印API响应内容，调试用
-        if (data.status === '1' && data.geocodes && data.geocodes.length > 0) {
-            const geocode = data.geocodes[0];
-            const [lon, lat] = geocode.location.split(',');
-            const postalCode = geocode.adcode;
-
-            document.getElementById("companyGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
-            document.getElementById("companyPostalCodeResult").innerText = postalCode || "未找到邮政编码";
-        } else {
-            document.getElementById("companyGpsResult").innerText = "未找到该公司的GPS坐标";
-            document.getElementById("companyPostalCodeResult").innerText = "未找到邮政编码";
+        // 动态加载脚本函数，模拟 JSONP 请求
+        function loadScript(url) {
+            const script = document.createElement('script');
+            script.src = url;
+            document.body.appendChild(script);
         }
-    }
 
-    // 根据公司名称获取 GPS 坐标和邮政编码（优先使用高德地图）
-    function getCompanyCoordinates() {
-        const companyName = encodeURIComponent(document.getElementById("companyName").value);
-        const url = `https://restapi.amap.com/v3/geocode/geo?address=${companyName}&key=${amapApiKey}&callback=handleAmapResponse`;
-        loadScript(url);
-    }
+        // 使用高德地图API根据公司名称查询GPS坐标和邮政编码的回调函数
+        function handleAmapResponse(data) {
+            if (data.status === '1' && data.geocodes && data.geocodes.length > 0) {
+                const geocode = data.geocodes[0];
+                const [lon, lat] = geocode.location.split(',');
+                const postalCode = geocode.adcode;
 
-    // 使用高德地图API根据地址查询GPS坐标和邮政编码
-    function getAddressInfo() {
-        const address = encodeURIComponent(document.getElementById("companyAddress").value);
-        const url = `https://restapi.amap.com/v3/geocode/geo?address=${address}&key=${amapApiKey}&callback=handleAmapResponse`;
-        loadScript(url);
-    }
-</script>
+                document.getElementById("companyGpsResult").innerText = `纬度: ${lat}, 经度: ${lon}`;
+                document.getElementById("companyPostalCodeResult").innerText = postalCode || "未找到邮政编码";
+            } else {
+                document.getElementById("companyGpsResult").innerText = "未找到该公司的GPS坐标";
+                document.getElementById("companyPostalCodeResult").innerText = "未找到邮政编码";
+            }
+        }
+
+        // 根据公司名称获取 GPS 坐标和邮政编码（优先使用高德地图）
+        function getCompanyCoordinates() {
+            const companyName = encodeURIComponent(document.getElementById("companyName").value);
+            const url = `https://restapi.amap.com/v3/geocode/geo?address=${companyName}&key=${amapApiKey}&callback=handleAmapResponse`;
+            loadScript(url);
+        }
+
+        // 使用高德地图API根据地址查询GPS坐标和邮政编码
+        function getAddressInfo() {
+            const address = encodeURIComponent(document.getElementById("companyAddress").value);
+            const url = `https://restapi.amap.com/v3/geocode/geo?address=${address}&key=${amapApiKey}&callback=handleAmapResponse`;
+            loadScript(url);
+        }
+    </script>
+</body>
+</html>
